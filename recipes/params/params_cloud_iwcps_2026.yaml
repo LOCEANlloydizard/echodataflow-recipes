@@ -27,7 +27,7 @@ flows:
   update_cache_MVBS:
     slice_mins: 180
     path_cache: "/media/volume/shimada_202506_volume/viz_data_cache"
-    path_MVBS: "agr230002-bucket01/prefect_IWCPS_2026/acoustics/MVBS"
+    path_MVBS: "agr230002-bucket01/prefect_IWCPS_2026_new/acoustics/MVBS"
     cred_file: "/home/exouser/.config/rclone/rclone.conf"
     file_MVBS_csv: MVBS_files.csv
     file_MVBS_zarr: latest_MVBS.zarr
