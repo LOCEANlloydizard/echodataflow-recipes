@@ -3,7 +3,7 @@ init:  # TODO: consider moving this section to deploy_ship.yaml
 
 flows:
   raw2Sv:
-    exclude_before: # "2025-06-13T10:00:00+00:00"  # use ISO8601 format: if UTC use +00:00 or Z
+    exclude_before: "2026-06-24T10:00:00+00:00"  # use ISO8601 format: if UTC use +00:00 or Z
     exclude_raw_file: [] # any known corrupted files
       # - "IWCPS-D20250617-T175659.raw"
       # - "IWCPS-D20250711-T212420.raw"
@@ -14,16 +14,16 @@ flows:
     depth_offset: 7
     sonar_model: EK80
     nmea_sentence: GGA
-    filename_pattern: "DY2601-*.raw" # .raw filename pattern to include
-    path_raw: /Users/phocoena/IWCPS_2026_workflow/IWCPS_2026_data # path to raw files
-    path_main: /Users/phocoena/edge2coud_workflow/2026_IWCPS_output
+    filename_pattern: "RL2604-*.raw" # .raw filename pattern to include
+    path_raw: "/Volumes/data_import/Cruise Data/RL2604 IWCPS/RAW/EK80" # path to raw files
+    path_main: /Volumes/sh2506_ext1/edge2cloud_workflow/2026_IWCPS_output
     file_Sv_csv: Sv_files.csv
   create_MVBS:
     slice_mins: 20
     num_slices: 3
     range_bin: 0.25m
     ping_time_bin: 5s
-    path_main: /Users/phocoena/edge2coud_workflow/2026_IWCPS_output
+    path_main: /Volumes/sh2506_ext1/edge2cloud_workflow/2026_IWCPS_output
     file_Sv_csv: Sv_files.csv
     file_MVBS_csv: MVBS_files.csv
   # predict_hake:
@@ -33,10 +33,10 @@ flows:
   #   softmax_threshold: 0.5
   #   path_main: "/Volumes/sh2506_ext1/leg2"
   #   file_MVBS_csv: MVBS_files.csv
-    file_prediction_csv: prediction_files.csv
+  #   file_prediction_csv: prediction_files.csv
   file_upload_acoustics:
-    src_dir: /Users/phocoena/edge2coud_workflow/2026_IWCPS_output
-    dest_dir: "osn_sdsc_hake:/agr230002-bucket01/prefect_IWCPS_2026/acoustics"
+    src_dir: /Volumes/sh2506_ext1/edge2cloud_workflow/2026_IWCPS_output
+    dest_dir: "osn_sdsc_hake:/agr230002-bucket01/prefect_IWCPS_2026_new/acoustics"
     exclude_subdirs:
       - Sv
     max_age: 2
