@@ -24,10 +24,17 @@ flows:
   #   path_vm_local: "/media/volume/shimada_202506_volume/integration" # path to local integrated data
   #   file_NASC_all_grid: NASC_all_griddify.geojson
   #   file_stratum_mean: stratum_mean.csv
-  update_cache_MVBS:
+  update_cache_MVBS_lasker:
     slice_mins: 180
     path_cache: "/media/volume/shimada_202506_volume/viz_data_cache_2026/iwcsp_2026"
     path_MVBS: "agr230002-bucket01/prefect_IWCPS_2026_new/acoustics/MVBS"
+    cred_file: "/home/exouser/.config/rclone/rclone.conf"
+    file_MVBS_csv: MVBS_files.csv
+    file_MVBS_zarr: latest_MVBS.zarr
+  update_cache_MVBS_dyson:
+    slice_mins: 180
+    path_cache: "/media/volume/shimada_202506_volume/viz_data_cache_2026/dyson_2026"
+    path_MVBS: "agr230002-bucket01/prefect_MACE_2026/acoustics/MVBS"
     cred_file: "/home/exouser/.config/rclone/rclone.conf"
     file_MVBS_csv: MVBS_files.csv
     file_MVBS_zarr: latest_MVBS.zarr
