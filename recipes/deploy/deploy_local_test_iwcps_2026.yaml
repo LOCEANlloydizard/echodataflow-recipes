@@ -1,0 +1,23 @@
+flow_start_time:
+
+source:
+  mode: local
+
+default_work_pool_name: local
+
+flows:
+  raw2Sv:
+    module: flows_acoustics
+    deployment_name: raw2Sv-local-test
+    interval: 5
+
+  create_MVBS:
+    module: flows_acoustics
+    deployment_name: create-MVBS-local-test
+    interval: 10
+
+  process_CPS:
+    module: flows_CPS
+    deployment_name: process-CPS-local-test
+    flow_alias: process_acoustic_data
+    interval: 20
