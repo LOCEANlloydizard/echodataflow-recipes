@@ -1,11 +1,9 @@
 init:  # TODO: consider moving this section to deploy_ship.yaml
   counter_raw_copy: 0
 
-# TODO match what is in the local linux test
-
 flows:
   raw2Sv:
-    exclude_before: "2026-06-24T10:00:00+00:00"  # use ISO8601 format: if UTC use +00:00 or Z
+    exclude_before: # "2025-06-13T10:00:00+00:00"  # use ISO8601 format: if UTC use +00:00 or Z
     exclude_raw_file: [] # any known corrupted files
       # - "IWCPS-D20250617-T175659.raw"
       # - "IWCPS-D20250711-T212420.raw"
@@ -15,17 +13,18 @@ flows:
     waveform_mode: CW
     depth_offset: 7
     sonar_model: EK80
+    # datagram_type: MRU1
     nmea_sentence: GGA
-    filename_pattern: "RL2604-*.raw" # .raw filename pattern to include
-    path_raw: "/Volumes/data_import/Cruise Data/RL2604 IWCPS/RAW/EK80" # path to raw files
-    path_main: /Volumes/sh2506_ext1/edge2cloud_workflow/2026_IWCPS_output
+    filename_pattern: "Hake-*.raw" # .raw filename pattern to include
+    path_raw: /home/ctuguinay/echodataflow_test/input_raw # path to raw files
+    path_main: /home/ctuguinay/echodataflow_test/output
     file_Sv_csv: Sv_files.csv
   create_MVBS:
     slice_mins: 20
     num_slices: 3
     range_bin: 1m
     ping_time_bin: 5s
-    path_main: /Volumes/sh2506_ext1/edge2cloud_workflow/2026_IWCPS_output
+    path_main: /home/ctuguinay/echodataflow_test/output
     file_Sv_csv: Sv_files.csv
     file_MVBS_csv: MVBS_files.csv
   predict_hake:
@@ -34,16 +33,15 @@ flows:
     temperature: 0.5
     softmax_threshold: 0.5
     max_depth: 590.0
-    path_weight: /Volumes/sh2506_ext1/edge2cloud_workflow/2026_IWCPS_output/model_weights/binary_hake_model_weight_test.ckpt
-    path_main: /Volumes/sh2506_ext1/edge2cloud_workflow/2026_IWCPS_output
+    path_weight: /home/ctuguinay/segmentation_inference/segmentation_inference/test_data/binary_hake_model_weight_test.ckpt
+    path_main: /home/ctuguinay/echodataflow_test/output
     file_MVBS_csv: MVBS_files.csv
     file_prediction_csv: prediction_files.csv
   file_upload_acoustics:
-    src_dir: /Volumes/sh2506_ext1/edge2cloud_workflow/2026_IWCPS_output
-    dest_dir: "osn_sdsc_hake:/agr230002-bucket01/prefect_IWCPS_2026_new/acoustics"
+    src_dir: /home/ctuguinay/echodataflow_test/output
+    dest_dir: osn:/agr230002-bucket01/prefect_test_20260624/output
     exclude_subdirs:
       - Sv
-      - model_weights
     max_age: 2
   # file_upload_trawl:
   #   src_dir: "/Users/feresa/mnt_qnap_clams/nwc"
