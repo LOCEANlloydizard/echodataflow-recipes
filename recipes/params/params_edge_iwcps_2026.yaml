@@ -5,7 +5,7 @@ init:  # TODO: consider moving this section to deploy_ship.yaml
 
 flows:
   raw2Sv:
-    exclude_before: "2026-06-24T10:00:00+00:00"  # use ISO8601 format: if UTC use +00:00 or Z
+    exclude_before: "2026-07-07T00:00:00+00:00"  # use ISO8601 format: if UTC use +00:00 or Z
     exclude_raw_file: [] # any known corrupted files
       # - "IWCPS-D20250617-T175659.raw"
       # - "IWCPS-D20250711-T212420.raw"
@@ -15,7 +15,7 @@ flows:
     waveform_mode: CW
     depth_offset: 7
     sonar_model: EK80
-    nmea_sentence: GGA
+    datagram_type: MRU1
     filename_pattern: "RL2604-*.raw" # .raw filename pattern to include
     path_raw: "/Volumes/data_import/Cruise Data/RL2604 IWCPS/RAW/EK80" # path to raw files
     path_main: /Volumes/sh2506_ext1/edge2cloud_workflow/2026_IWCPS_output
@@ -34,7 +34,7 @@ flows:
     temperature: 0.5
     softmax_threshold: 0.5
     max_depth: 590.0
-    path_weight: /Volumes/sh2506_ext1/edge2cloud_workflow/2026_IWCPS_output/model_weights/binary_hake_model_weight_test.ckpt
+    path_weight: /Volumes/sh2506_ext1/edge2cloud_workflow/2026_IWCPS_output/model_weights/binary_hake_model_weight.ckpt
     path_main: /Volumes/sh2506_ext1/edge2cloud_workflow/2026_IWCPS_output
     file_MVBS_csv: MVBS_files.csv
     file_prediction_csv: prediction_files.csv
