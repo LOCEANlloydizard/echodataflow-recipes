@@ -5,7 +5,7 @@ init:  # TODO: consider moving this section to deploy_ship.yaml
 
 flows:
   raw2Sv:
-    exclude_before: "2026-07-07T00:00:00+00:00"  # use ISO8601 format: if UTC use +00:00 or Z
+    exclude_before: "2026-07-01T00:00:00+00:00"  # use ISO8601 format: if UTC use +00:00 or Z
     exclude_raw_file: [] # any known corrupted files
       # - "IWCPS-D20250617-T175659.raw"
       # - "IWCPS-D20250711-T212420.raw"

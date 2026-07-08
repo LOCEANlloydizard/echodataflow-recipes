@@ -1,4 +1,4 @@
-flow_start_time: "2026-07-07T00:00:00+00:00" # time travel for testing or reprocessing
+flow_start_time: "2026-07-01T00:00:00+00:00" # time travel for testing or reprocessing
                 # use ISO8601 format: if UTC use +00:00 or Z
 
 # TODO match what is in the local linux test
