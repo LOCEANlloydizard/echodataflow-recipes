@@ -34,7 +34,7 @@ flows:
     temperature: 0.5
     softmax_threshold: 0.5
     max_depth: 590.0
-    path_weight: /Volumes/sh2506_ext1/edge2cloud_workflow/2026_IWCPS_output/model_weights/binary_hake_model_weight.ckpt
+    path_weight: /Volumes/sh2506_ext1/edge2cloud_workflow/model_weights/binary_hake_model_weight.ckpt
     path_main: /Volumes/sh2506_ext1/edge2cloud_workflow/2026_IWCPS_output
     file_MVBS_csv: MVBS_files.csv
     file_prediction_csv: prediction_files.csv
