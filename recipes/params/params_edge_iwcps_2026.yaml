@@ -6,10 +6,8 @@ init:  # TODO: consider moving this section to deploy_ship.yaml
 flows:
   raw2Sv:
     exclude_before: "2026-07-01T00:00:00+00:00"  # use ISO8601 format: if UTC use +00:00 or Z
-    exclude_raw_file: [] # any known corrupted files
-      # - "IWCPS-D20250617-T175659.raw"
-      # - "IWCPS-D20250711-T212420.raw"
-      # - "IWCPS-D20250901-T145533.raw"
+    exclude_raw_file: # any known corrupted files, use [] if none
+      - "RL2604-D20260726-T233600.raw"
     parallel: False
     encode_mode: power
     waveform_mode: CW
@@ -17,7 +15,7 @@ flows:
     sonar_model: EK80
     datagram_type: MRU1
     filename_pattern: "RL2604-*.raw" # .raw filename pattern to include
-    path_raw: "/Volumes/data_import/Cruise Data/RL2604 IWCPS/RAW/EK80" # path to raw files
+    path_raw: "/Users/phocoena/data_import/Cruise Data/RL2604 IWCPS/RAW/EK80" # path to raw files
     path_main: /Volumes/sh2506_ext1/edge2cloud_workflow/2026_IWCPS_output
     file_Sv_csv: Sv_files.csv
   create_MVBS:
