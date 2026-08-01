@@ -1,5 +1,3 @@
-# TODO match what is in the local linux test
-
 flows:
   raw2Sv:
     exclude_before: "2026-07-01T00:00:00+00:00"  # use ISO8601 format: if UTC use +00:00 or Z
