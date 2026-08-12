@@ -1,0 +1,11 @@
+source:
+  mode: local
+
+default_work_pool_name: local
+
+flows:
+  transect_update:
+    deployment_name: transect-update
+    triggers:
+      - expect: "echodataflow.transect.updated"
+        resource_name: "transect-monitor"
