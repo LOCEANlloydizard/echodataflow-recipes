@@ -1,0 +1,24 @@
+flows:
+  raw2Sv:
+    exclude_before:
+    exclude_raw_file: []
+    parallel: false
+    new_file_num_limit: 1
+
+    encode_mode: power
+    waveform_mode: CW
+    depth_offset: 0
+    sonar_model: EK80
+    datagram_type:
+    nmea_sentence: GGA
+    filename_pattern: "*.raw"
+
+    path_raw: "/path/to/raw"
+    path_main: "/path/to/echodataflow/output"
+    file_Sv_csv: Sv_files.csv
+
+  transect_update:
+    path_transect_csv: "/path/to/plotSurvey_Survey_Data_Visualizer.csv"
+    path_snapshot_csv: "/path/to/plotSurvey_Survey_Data_Visualizer_snapshot.csv"
+    path_main: "/path/to/echodataflow/output"
+    file_Sv_csv: Sv_files.csv

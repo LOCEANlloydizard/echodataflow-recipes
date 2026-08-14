@@ -1,0 +1,19 @@
+source:
+  mode: local
+
+default_work_pool_name: local
+
+flows:
+  raw2Sv:
+    deployment_name: raw2Sv-monitor-test
+    triggers:
+      - expect: "echodataflow.raw.updated"
+        resource_name: "raw-monitor"
+        resource_scope: primary
+
+  transect_update:
+    deployment_name: transect-update-monitor-test
+    triggers:
+      - expect: "echodataflow.transect.updated"
+        resource_name: "transect-monitor"
+        resource_scope: related
