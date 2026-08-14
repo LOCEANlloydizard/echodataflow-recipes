@@ -1,0 +1,154 @@
+name: Test monitoring recipes
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  test-monitoring:
+    runs-on: ubuntu-latest
+
+    env:
+      PREFECT_API_URL: http://127.0.0.1:4200/api
+
+    steps:
+      - name: Checkout recipes
+        uses: actions/checkout@v4
+
+      - name: Checkout echodataflow monitoring PR
+        uses: actions/checkout@v4
+        with:
+          repository: echostack-org/echodataflow
+          ref: refs/pull/174/head
+          path: echodataflow
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install echodataflow
+        run: pip install -e ./echodataflow
+
+      - name: Start Prefect server
+        run: |
+          prefect server start --host 127.0.0.1 > /tmp/prefect-server.log 2>&1 &
+          echo $! > /tmp/prefect-server.pid
+
+      - name: Wait for Prefect server
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4200/api/health >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+
+          cat /tmp/prefect-server.log
+          exit 1
+
+      - name: Test raw and transect event monitoring
+        shell: python
+        run: |
+          import asyncio
+          import tempfile
+          import time
+          from datetime import datetime, timedelta, timezone
+          from pathlib import Path
+
+          from prefect import get_client
+          from prefect.events.filters import EventFilter, EventOccurredFilter
+
+          from echodataflow.utils.raw_monitor import watch_raw_directory
+          from echodataflow.utils.transect_monitor import watch_transect_file
+
+
+          async def has_event(event_name):
+              async with get_client() as client:
+                  now = datetime.now(timezone.utc)
+                  page = await client.read_events(
+                      filter=EventFilter(
+                          occurred=EventOccurredFilter(
+                              since=now - timedelta(minutes=5),
+                              until=now,
+                          )
+                      ),
+                      limit=100,
+                  )
+
+                  return any(
+                      event.event == event_name
+                      for event in page.events
+                  )
+
+
+          async def wait_for_event(event_name, timeout=10):
+              deadline = time.time() + timeout
+
+              while time.time() < deadline:
+                  if await has_event(event_name):
+                      return
+                  await asyncio.sleep(0.5)
+
+              raise AssertionError(
+                  f"Did not receive expected Prefect event: {event_name}"
+              )
+
+
+          async def main():
+              with tempfile.TemporaryDirectory() as tmp:
+                  root = Path(tmp)
+
+                  # RAW monitoring
+                  raw_dir = root / "raw"
+                  raw_dir.mkdir()
+
+                  observer = watch_raw_directory(raw_dir)
+
+                  try:
+                      (raw_dir / "test.raw").write_bytes(b"dummy raw data")
+                      await wait_for_event("echodataflow.raw.updated")
+                  finally:
+                      observer.stop()
+                      observer.join()
+
+                  # Transect monitoring
+                  transect_file = root / "transects.csv"
+                  transect_file.write_text(
+                      "transectPart,transectNumber,transectStart,transectEnd\n"
+                      "1,1,2024-06-25T21:45:00+00:00,\n"
+                  )
+
+                  observer = watch_transect_file(transect_file)
+
+                  try:
+                      transect_file.write_text(
+                          "transectPart,transectNumber,transectStart,transectEnd\n"
+                          "1,1,2024-06-25T21:45:00+00:00,"
+                          "2024-06-25T21:50:00+00:00\n"
+                      )
+
+                      await wait_for_event(
+                          "echodataflow.transect.updated"
+                      )
+                  finally:
+                      observer.stop()
+                      observer.join()
+
+
+          asyncio.run(main())
+
+          print("RAW and transect Prefect events received successfully.")
+
+      - name: Show Prefect server log on failure
+        if: failure()
+        run: cat /tmp/prefect-server.log
+
+      - name: Upload monitoring test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: monitoring-test-artifacts
+          path: /tmp/prefect-server.log
