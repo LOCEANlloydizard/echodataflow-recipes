@@ -1,8 +1,13 @@
+concurrency_groups:
+  copy_raw_serial:
+    limit: 1
+
 flows:
   copy_raw:
     deployment_name: copy-raw-cps-test
     interval: 3
     inject_time_offset: true
+    concurrency_group: copy_raw_serial
 
   raw2Sv:
     deployment_name: raw2Sv-cps-test
@@ -21,6 +26,10 @@ flows:
       - expect: "echodataflow.transect.updated"
         resource_name: "transect-monitor"
         resource_scope: related
+
+      - expect: "echodataflow.sv.updated"
+        resource_name: "sv-monitor"
+        resource_scope: primary
 
   update_cache_CPS:
     deployment_name: update-cache-CPS-cps-test

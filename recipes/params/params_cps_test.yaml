@@ -1,22 +1,23 @@
 flows:
   copy_raw:
-    path_raw_list: C:/Users/lloyd/Downloads/SH2407_raw_list_organized.csv
-    path_copy: C:/Users/lloyd/Desktop/my_echopype/run_echopype_tests/echodataflow_edge_test_SH2407/raw
+    path_raw_list: "/path/to/SH2407_raw_list_organized.csv"
+    path_copy: "/path/to/cps_workflow/raw"
     s3_bucket: noaa-wcsd-pds
-    exclude_before: "2024-06-25T21:43:00+00:00"
+    exclude_before: "2024-08-05T13:10:00+00:00"
+    exclude_after: "2024-08-06T12:30:00+00:00"
     endpoint_url: "https://s3.amazonaws.com"
 
   simulate_transects:
-    path_transect_csv: C:/Users/lloyd/Desktop/my_echopype/run_echopype_tests/echodataflow_edge_test_SH2407/transects/plotSurvey_Survey_Data_Visualizer.csv
-    survey_start: "2024-06-25T21:45:00+00:00"
-    transect_duration_minutes: 5
+    path_transect_csv: "/path/to/cps_workflow/plotSurvey_Survey_Data_Visualizer.csv"
+    survey_start: "2024-08-05T13:16:00+00:00"
+    transect_duration_minutes: 20
     start_transect_num: 1
     max_transects: 20
 
   raw2Sv:
-    exclude_before: "2024-06-25T21:43:00+00:00"
+    exclude_before: "2024-08-05T13:10:00+00:00"
     exclude_raw_file: []
-    parallel: False
+    parallel: false
     new_file_num_limit: 10
 
     encode_mode: power
@@ -25,24 +26,22 @@ flows:
     sonar_model: EK80
     datagram_type:
     nmea_sentence: GGA
-    filename_pattern: "Hake-*.raw"
 
     add_depth: true
     add_location: true
     add_splitbeam_angle: true
 
-    path_raw: C:/Users/lloyd/Desktop/my_echopype/run_echopype_tests/echodataflow_edge_test_SH2407/raw
-    path_main: C:/Users/lloyd/Desktop/my_echopype/run_echopype_tests/echodataflow_edge_test_SH2407
-    file_Sv_csv: Sv_files.csv
+    path_main: "/path/to/cps_workflow"
+    processing_db: processing.db
 
   process_CPS:
-    path_transect_csv: C:/Users/lloyd/Desktop/my_echopype/run_echopype_tests/echodataflow_edge_test_SH2407/transects/plotSurvey_Survey_Data_Visualizer.csv
-    path_snapshot_csv: C:/Users/lloyd/Desktop/my_echopype/run_echopype_tests/echodataflow_edge_test_SH2407/transects/plotSurvey_Survey_Data_Visualizer_snapshot.csv
-
-    path_main: C:/Users/lloyd/Desktop/my_echopype/run_echopype_tests/echodataflow_edge_test_SH2407
-    file_Sv_csv: Sv_files.csv
+    path_transect_csv: "/path/to/cps_workflow/plotSurvey_Survey_Data_Visualizer.csv"
+    path_snapshot_csv: "/path/to/cps_workflow/plotSurvey_Survey_Data_Visualizer_snapshot.csv"
+    path_main: "/path/to/cps_workflow"
+    processing_db: processing.db
 
     target_frequency: 70000
+    min_depth: 10
 
     seafloor_threshold: [-40, 2.4, 1.0]
     seafloor_offset: 0.5
@@ -58,7 +57,7 @@ flows:
     dist_bin: 0.5nmi
 
   update_cache_CPS:
-    path_CPS: C:/Users/lloyd/Desktop/my_echopype/run_echopype_tests/echodataflow_edge_test_SH2407/CPS_Masks_Zarr
-    path_cache: C:/Users/lloyd/Desktop/my_echopype/run_echopype_tests/echodataflow_edge_test_SH2407/viz_cache_CPS
-    path_transect_csv: C:/Users/lloyd/Desktop/my_echopype/run_echopype_tests/echodataflow_edge_test_SH2407/transects/plotSurvey_Survey_Data_Visualizer.csv
+    path_CPS: "/path/to/cps_workflow/CPS_Masks_Zarr"
+    path_cache: "/path/to/cps_workflow/viz_cache_CPS"
+    path_transect_csv: "/path/to/cps_workflow/plotSurvey_Survey_Data_Visualizer.csv"
     file_CPS_zarr: latest_CPS.zarr
