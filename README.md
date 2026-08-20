@@ -38,8 +38,9 @@ recipes/
 
 scripts/
 ├── watch_raw_updates.py
-│                # watches a RAW-data directory, updates processing.db,
-│                # and emits echodataflow.raw.updated Prefect events
+│                # watches a RAW-data directory, updates the configured
+│                # SQLAlchemy processing ledger, and emits
+│                # echodataflow.raw.updated Prefect events
 └── watch_transect_updates.py
                  # watches a transect start/end CSV and emits
                  # echodataflow.transect.updated Prefect events
@@ -62,8 +63,11 @@ components:
 1. **Filesystem monitoring** — `watchdog` monitors input files and directories
    and emits Prefect events when relevant changes occur.
 
-2. **Persistent processing state** — a SQLite database (`processing.db`) keeps
-   track of available inputs and processing state across flow runs and restarts.
+2. **Persistent processing state** — a SQLAlchemy-backed processing ledger
+   keeps track of available inputs and processing state across flow runs and
+   restarts. PostgreSQL is recommended for near-real-time deployments where
+   multiple flows may access the ledger concurrently. SQLite remains useful for
+   simple local or single-writer workflows.
 
 3. **Event-driven processing** — Prefect deployments subscribe to events such as
    `echodataflow.raw.updated`, `echodataflow.sv.updated`, or
@@ -77,18 +81,19 @@ RAW file arrives
       ▼
 RAW watcher
       │
-      ├── update processing.db
+      ├── update processing ledger
       └── emit echodataflow.raw.updated
                          │
                          ▼
                        raw2Sv
                          │
-                         ├── update processing.db
+                         ├── update processing ledger
                          └── emit echodataflow.sv.updated
 ```
 
-Prefect events act as triggers, while `processing.db` provides persistent state
-that flows can use to determine what still needs to be processed.
+Prefect events act as triggers, while the processing ledger provides
+persistent state that flows can use to determine what still needs to be
+processed.
 
 This replaces the earlier pattern of repeatedly scanning directories or using
 CSV processing lists as the main workflow ledger.
@@ -132,7 +137,6 @@ cps_workflow/
 ├── CPS_Seafloor_CSVs/                        # generated seafloor estimates
 ├── viz_cache_CPS/                            # generated visualization cache
 │
-├── processing.db                             # persistent processing ledger
 ├── Sv_files.csv                              # auxiliary/legacy Sv file index
 ├── plotSurvey_Survey_Data_Visualizer.csv     # transect start/end information
 └── plotSurvey_Survey_Data_Visualizer_snapshot.csv
@@ -145,9 +149,14 @@ For a live deployment, the main inputs are typically:
 
 - a directory where RAW files arrive;
 - a workflow root directory (`path_main`);
+- a processing database configured with `processing_db`;
 - a transect start/end CSV if the downstream workflow depends on transects.
 
-The exact paths are configured in the parameter recipe.
+The processing database does not need to live inside the workflow directory.
+For PostgreSQL, `processing_db` is a SQLAlchemy database URL. For SQLite, it can
+still be a local database path.
+
+The exact paths and database connection are configured in the parameter recipe.
 
 For example:
 
@@ -155,29 +164,42 @@ For example:
 flows:
   raw2Sv:
     path_main: "/path/to/cps_workflow"
-    processing_db: processing.db
+    processing_db: "postgresql+psycopg://USER:PASSWORD@HOST:5432/DATABASE"
 
   process_CPS:
     path_main: "/path/to/cps_workflow"
     path_transect_csv: "/path/to/cps_workflow/plotSurvey_Survey_Data_Visualizer.csv"
     path_snapshot_csv: "/path/to/cps_workflow/plotSurvey_Survey_Data_Visualizer_snapshot.csv"
-    processing_db: processing.db
+    processing_db: "postgresql+psycopg://USER:PASSWORD@HOST:5432/DATABASE"
 ```
 
 ## Processing ledger and file indexes
 
-The near-real-time workflow uses a SQLite processing ledger:
+The near-real-time workflow uses a SQLAlchemy-backed processing ledger.
+
+For concurrent near-real-time processing, PostgreSQL is the recommended backend.
+A typical connection string is:
+
+```text
+postgresql+psycopg://USER:PASSWORD@HOST:5432/DATABASE
+```
+
+SQLite is also supported for simpler local or single-writer workflows. In that
+case, `processing_db` can be a local database path such as:
 
 ```text
 processing.db
 ```
 
-The database provides persistent workflow state independently of Prefect events.
-
+The ledger provides persistent workflow state independently of Prefect events.
 Filesystem events are notifications rather than the source of truth. A flow can
 query the processing database to determine which inputs or products still need
 processing, including after a restart or when upstream products arrive later
 than expected.
+
+Using SQLAlchemy keeps the workflow logic independent of the database backend,
+while PostgreSQL provides safer concurrent access when several near-real-time
+flows may read from or write to the ledger at the same time.
 
 This also allows downstream flows to reconcile asynchronously arriving inputs.
 
@@ -193,8 +215,8 @@ as processing ledgers and lookup tables.
 is no longer the primary source of workflow state in the database-backed
 near-real-time architecture.
 
-New workflows should use `processing.db` for orchestration and reconciliation
-rather than relying on `Sv_files.csv`.
+New near-real-time workflows should use the configured `processing_db` for
+orchestration and reconciliation rather than relying on `Sv_files.csv`.
 
 ## 1. Create a recipe
 
@@ -249,7 +271,7 @@ For example:
 flows:
   raw2Sv:
     path_main: "/path/to/workflow"
-    processing_db: processing.db
+    processing_db: "postgresql+psycopg://USER:PASSWORD@HOST:5432/DATABASE"
 
     encode_mode: power
     waveform_mode: CW
@@ -296,14 +318,17 @@ The monitors run independently from the Prefect worker.
 ```bash
 python scripts/watch_raw_updates.py \
     /path/to/workflow/raw \
-    --db-path /path/to/workflow/processing.db
+    --db-path "postgresql+psycopg://USER:PASSWORD@HOST:5432/DATABASE"
 ```
 
 The RAW monitor:
 
 1. watches the RAW directory for new or updated files;
-2. records their state in `processing.db`;
+2. records their state in the configured SQLAlchemy processing ledger;
 3. emits an `echodataflow.raw.updated` Prefect event when relevant changes occur.
+
+`--db-path` accepts either a local SQLite path or a SQLAlchemy database URL.
+For concurrent near-real-time use, PostgreSQL is recommended.
 
 ### Transect monitor
 
@@ -493,6 +518,7 @@ Users should adapt `params_cps_test.yaml` for the target deployment, in
 particular:
 
 - workflow paths;
+- the `processing_db` SQLAlchemy connection string;
 - RAW data source and replay time range, when applicable;
 - sonar configuration;
 - transect input;
@@ -522,7 +548,22 @@ $env:ECHODATAFLOW_CPS_ROOT="C:\path\to\cps_workflow"
 ```
 
 The visualization therefore does not depend on machine-specific hard-coded
-paths: its inputs are resolved relative to the configured workflow root.
+paths: its file inputs are resolved relative to the configured workflow root.
+
+When the processing ledger is not the default local SQLite file, configure the
+database connection explicitly as well.
+
+On Linux/macOS:
+
+```bash
+export ECHODATAFLOW_CPS_PROCESSING_DB="postgresql+psycopg://USER:PASSWORD@HOST:5432/DATABASE"
+```
+
+On PowerShell:
+
+```powershell
+$env:ECHODATAFLOW_CPS_PROCESSING_DB="postgresql+psycopg://USER:PASSWORD@HOST:5432/DATABASE"
+```
 
 The default target frequency is 70 kHz and can optionally be changed with:
 
