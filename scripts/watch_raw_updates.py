@@ -2,7 +2,7 @@
 import time
 from pathlib import Path
 
-from echodataflow.utils.raw_monitor import watch_raw_directory
+from echodataflow.operations.operations_watchdog import watch_raw_directory
 
 
 def main():
