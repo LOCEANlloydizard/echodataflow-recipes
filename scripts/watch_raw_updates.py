@@ -16,14 +16,14 @@ def main():
     )
     parser.add_argument(
         "--db-path",
-        type=Path,
+        type=str,
         required=True,
-        help="Path to the SQLite processing ledger.",
+        help="Processing database path or SQLAlchemy database URL.",
     )
     args = parser.parse_args()
 
     target_dir = args.path.resolve()
-    db_path = args.db_path.resolve()
+    db_path = args.db_path
 
     if not target_dir.exists():
         raise FileNotFoundError(
