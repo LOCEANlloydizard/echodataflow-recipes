@@ -2,7 +2,7 @@ import argparse
 import time
 from pathlib import Path
 
-from echodataflow.utils.transect_monitor import watch_transect_file
+from echodataflow.operations.operations_watchdog import watch_transect_file
 
 
 def main():
