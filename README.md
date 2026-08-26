@@ -69,9 +69,9 @@ components:
    multiple flows may access the ledger concurrently. SQLite remains useful for
    simple local or single-writer workflows.
 
-3. **Event-driven processing** — Prefect deployments subscribe to events such as
-   `echodataflow.raw.updated`, `echodataflow.sv.updated`, or
-   `echodataflow.transect.updated`.
+3. **Event-driven processing** — Prefect deployments subscribe to filesystem
+   events such as `echodataflow.raw.updated` or `echodataflow.transect.updated`,
+   and can also use native Prefect flow-run events for flow-to-flow orchestration.
 
 For example:
 
@@ -85,18 +85,20 @@ RAW watcher
       └── emit echodataflow.raw.updated
                          │
                          ▼
-                       raw2Sv
+                    raw2Sv_CPS
                          │
-                         ├── update processing ledger
-                         └── emit echodataflow.sv.updated
+                         ▼
+              prefect.flow-run.Completed
 ```
 
 Prefect events act as triggers, while the processing ledger provides
 persistent state that flows can use to determine what still needs to be
 processed.
 
-This replaces the earlier pattern of repeatedly scanning directories or using
-CSV processing lists as the main workflow ledger.
+For database-backed near-real-time workflows such as CPS, this replaces
+repeatedly scanning directories or using CSV processing lists as the main
+orchestration ledger. Existing generic workflows may continue to use their
+established CSV-ledger architecture.
 
 Scheduled flows are still useful for operations such as simulated data arrival,
 test workflows, or periodic cache updates.
@@ -111,7 +113,7 @@ echodataflow.transect.updated
 Downstream flows can listen to one or several events:
 
 ```text
-echodataflow.sv.updated ──────┐
+prefect.flow-run.Completed ───┐
                               ├── downstream processing flow
 echodataflow.transect.updated ┘
 ```
@@ -246,16 +248,17 @@ flows:
 Here, `raw2Sv` is event-driven: it runs when the RAW monitor reports a change,
 rather than being repeatedly scheduled to check for new data.
 
-A downstream processing flow can similarly listen for processed Sv:
+A downstream processing flow can similarly listen for completion of an
+upstream flow:
 
 ```yaml
 flows:
   my_processing_flow:
     deployment_name: my-processing-example
     triggers:
-      - expect: "echodataflow.sv.updated"
-        resource_name: "sv-monitor"
-        resource_scope: primary
+      - expect: "prefect.flow-run.Completed"
+        resource_name: "raw2Sv-example"
+        resource_scope: related
 ```
 
 A flow may also listen for several independent events when it needs to reconcile
@@ -462,19 +465,19 @@ RAW files arrive
 echodataflow.raw.updated
         │
         ▼
-      raw2Sv
+    raw2Sv_CPS
         │
         ▼
-echodataflow.sv.updated ───────────────┐
-                                       │
-transect file                          │
-        │                              │
-        ▼                              │
-transect watcher                       │
-        │                              │
-        ▼                              │
-echodataflow.transect.updated ─────────┤
-                                       ▼
+prefect.flow-run.Completed ───────────┐
+                                      │
+transect file                         │
+        │                             │
+        ▼                             │
+transect watcher                      │
+        │                             │
+        ▼                             │
+echodataflow.transect.updated ────────┤
+                                      ▼
                                   process_CPS
                                        │
                                        ├── CPS masks
@@ -501,18 +504,25 @@ for building other event-driven Echodataflow recipes.
 
 ### Using the CPS example
 
-The CPS test recipe includes scheduled utilities for replaying historical data
-as though they were arriving in near real time.
+The CPS test recipe includes utilities for replaying historical data as though
+they were arriving in near real time.
 
 These include:
 
-- `copy_raw`, which progressively copies RAW files into the watched directory;
-- `simulate_transects`, which progressively updates a transect start/end file;
+- `copy_raw`, which can be launched manually to progressively copy RAW files into
+  the watched directory;
+- `simulate_transects`, which periodically updates a transect start/end file;
 - `update_cache_CPS`, which periodically refreshes the visualization cache.
 
-These scheduled components are useful for testing and replay. In a live
-deployment, RAW files and transect information may instead arrive from the
-actual acquisition system.
+For testing, `copy_raw` can be started manually with:
+
+```bash
+prefect deployment run "flow-copy-raw/copy-raw-cps-test"
+```
+
+These components are useful for testing and replay. In a live deployment, RAW
+files and transect information may instead arrive from the actual acquisition
+system.
 
 Users should adapt `params_cps_test.yaml` for the target deployment, in
 particular:
@@ -578,3 +588,42 @@ On PowerShell:
 ```powershell
 $env:ECHODATAFLOW_CPS_TARGET_FREQUENCY="70000"
 ```
+
+### Start the visualization
+
+From the `echodataflow` repository, with the Echodataflow environment activated,
+start the Panel application with:
+
+```bash
+panel serve src/echodataflow/services/viz_all_cps.py --show
+```
+
+For example, on PowerShell:
+
+```powershell
+conda activate echodataflow
+
+$env:ECHODATAFLOW_CPS_ROOT="C:\path\to\cps_workflow"
+$env:ECHODATAFLOW_CPS_PROCESSING_DB="postgresql+psycopg://USER:PASSWORD@HOST:5432/DATABASE"
+
+panel serve src/echodataflow/services/viz_all_cps.py --show
+```
+
+The dashboard reads the latest visualization cache produced by
+`update_cache_CPS`:
+
+```text
+process_CPS
+    │
+    ▼
+update_cache_CPS
+    │
+    ▼
+viz_cache_CPS/latest_CPS.zarr
+    │
+    ▼
+Panel CPS dashboard
+```
+
+`update_cache_CPS` must have produced a valid cache before processed CPS data can
+be displayed.
