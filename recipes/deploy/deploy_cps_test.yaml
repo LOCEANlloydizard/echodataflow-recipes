@@ -5,12 +5,15 @@ concurrency_groups:
 flows:
   copy_raw:
     deployment_name: copy-raw-cps-test
-    interval: 3
     inject_time_offset: true
     concurrency_group: copy_raw_serial
 
   raw2Sv:
+    flow: raw2Sv_CPS
     deployment_name: raw2Sv-cps-test
+    deployment_concurrency:
+      limit: 1
+      collision_strategy: CANCEL_NEW
     triggers:
       - expect: "echodataflow.raw.updated"
         resource_name: "raw-monitor"
@@ -22,15 +25,22 @@ flows:
 
   process_CPS:
     deployment_name: process-CPS-cps-test
+    deployment_concurrency:
+      limit: 1
+      collision_strategy: CANCEL_NEW
+      grace_period_seconds: 3600
     triggers:
       - expect: "echodataflow.transect.updated"
         resource_name: "transect-monitor"
         resource_scope: related
 
-      - expect: "echodataflow.sv.updated"
-        resource_name: "sv-monitor"
-        resource_scope: primary
+      - expect: "prefect.flow-run.Completed"
+        resource_name: "raw2Sv-cps-test"
+        resource_scope: related
 
   update_cache_CPS:
     deployment_name: update-cache-CPS-cps-test
     interval: 1
+    deployment_concurrency:
+      limit: 1
+      collision_strategy: CANCEL_NEW

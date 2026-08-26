@@ -1,6 +1,6 @@
 flows:
   copy_raw:
-    path_raw_list: "/path/to/SH2407_raw_list_organized.csv"
+    path_raw_list: "/path/to/cps_workflow/SH2407_raw_list_organized.csv"
     path_copy: "/path/to/cps_workflow/raw"
     s3_bucket: noaa-wcsd-pds
     exclude_before: "2024-08-05T13:10:00+00:00"
@@ -32,13 +32,13 @@ flows:
     add_splitbeam_angle: true
 
     path_main: "/path/to/cps_workflow"
-    processing_db: "postgresql+psycopg://USER:PASSWORD@HOST:5432/DATABASE"
+    processing_db: "postgresql+psycopg://echodataflow:echodataflow@localhost:5432/echodataflow_test"
 
   process_CPS:
     path_transect_csv: "/path/to/cps_workflow/plotSurvey_Survey_Data_Visualizer.csv"
     path_snapshot_csv: "/path/to/cps_workflow/plotSurvey_Survey_Data_Visualizer_snapshot.csv"
     path_main: "/path/to/cps_workflow"
-    processing_db: "postgresql+psycopg://USER:PASSWORD@HOST:5432/DATABASE"
+    processing_db: "postgresql+psycopg://echodataflow:echodataflow@localhost:5432/echodataflow_test"
 
     target_frequency: 70000
     min_depth: 10
