@@ -592,10 +592,10 @@ $env:ECHODATAFLOW_CPS_TARGET_FREQUENCY="70000"
 ### Start the visualization
 
 From the `echodataflow` repository, with the Echodataflow environment activated,
-start the Panel application with:
+start the CPS monitoring application directly with Python:
 
 ```bash
-panel serve src/echodataflow/services/viz_all_cps.py --show
+python src/echodataflow/services/viz_echogram_track_cps.py
 ```
 
 For example, on PowerShell:
@@ -605,8 +605,15 @@ conda activate echodataflow
 
 $env:ECHODATAFLOW_CPS_ROOT="C:\path\to\cps_workflow"
 $env:ECHODATAFLOW_CPS_PROCESSING_DB="postgresql+psycopg://USER:PASSWORD@HOST:5432/DATABASE"
+$env:ECHODATAFLOW_CPS_TARGET_FREQUENCY="70000"
 
-panel serve src/echodataflow/services/viz_all_cps.py --show
+python src\echodataflow\services\viz_echogram_track_cps.py
+```
+
+The dashboard is then available at:
+
+```text
+http://127.0.0.1:1803/cps_echogram
 ```
 
 The dashboard reads the latest visualization cache produced by
@@ -622,7 +629,7 @@ update_cache_CPS
 viz_cache_CPS/latest_CPS.zarr
     │
     ▼
-Panel CPS dashboard
+CPS monitoring dashboard
 ```
 
 `update_cache_CPS` must have produced a valid cache before processed CPS data can
