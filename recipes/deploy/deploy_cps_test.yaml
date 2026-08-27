@@ -1,3 +1,5 @@
+flow_start_time:
+
 concurrency_groups:
   copy_raw_serial:
     limit: 1
@@ -11,13 +13,10 @@ flows:
   raw2Sv:
     flow: raw2Sv_CPS
     deployment_name: raw2Sv-cps-test
+    interval: 5
     deployment_concurrency:
       limit: 1
       collision_strategy: CANCEL_NEW
-    triggers:
-      - expect: "echodataflow.raw.updated"
-        resource_name: "raw-monitor"
-        resource_scope: primary
 
   simulate_transects:
     deployment_name: simulate-transects-cps-test
@@ -29,6 +28,7 @@ flows:
       limit: 1
       collision_strategy: CANCEL_NEW
       grace_period_seconds: 3600
+
     triggers:
       - expect: "echodataflow.transect.updated"
         resource_name: "transect-monitor"
