@@ -1,0 +1,16 @@
+flows:
+  fetch_spasso:
+    host: "ftp-access.aviso.altimetry.fr"
+    port: 2221
+    remote_path: "data/Cruises/IWCPS_Leg5"
+
+    path_main: "D:/spasso/IWCPS_Leg5"
+
+    filename_pattern: "*"
+    new_file_num_limit: 1
+
+    username_env: "SPASSO_USERNAME"
+    password_env: "SPASSO_PASSWORD"
+
+    task_retries: 3
+    task_retry_delay_seconds: 30

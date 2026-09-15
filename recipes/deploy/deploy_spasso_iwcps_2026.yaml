@@ -1,0 +1,8 @@
+flow_start_time:
+
+flows:
+  fetch_spasso:
+    deployment_name: fetch-spasso-iwcps-2026
+    deployment_concurrency:
+      limit: 1
+      collision_strategy: CANCEL_NEW
