@@ -17,12 +17,12 @@ jobs:
       - name: Checkout recipes
         uses: actions/checkout@v4
 
-      - name: Checkout echodataflow monitoring PR
+      - name: Checkout echodataflow
         uses: actions/checkout@v4
         with:
           repository: echostack-org/echodataflow
-          ref: refs/pull/174/head
           path: echodataflow
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
