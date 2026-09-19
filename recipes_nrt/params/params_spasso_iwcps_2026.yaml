@@ -1,16 +1,28 @@
 flows:
   fetch_spasso:
-    host: "ftp-access.aviso.altimetry.fr"
+    host: "download host"
     port: 2221
-    remote_path: "data/Cruises/IWCPS_Leg5"
+    remote_path: "remote path"
 
-    path_main: "D:/spasso/IWCPS_Leg5"
+    path_main: "path/to/spasso"
 
-    filename_pattern: "*"
-    new_file_num_limit: 1
+    product_patterns:
+      - "Copernicus_PHY"
+      - "Copernicus_SST_L4"
+      - "Copernicus_SSS_L4"
+      - "Copernicus_CHL_L4"
+      - "FTLE_Copernicus_PHY"
+      - "OW_Copernicus_PHY"
+      - "KE_Copernicus_PHY"
+      - "LLADV_Copernicus_PHY"
 
-    username_env: "SPASSO_USERNAME"
-    password_env: "SPASSO_PASSWORD"
+    username_secret: "spasso-username"
+    password_secret: "spasso-password"
 
     task_retries: 3
     task_retry_delay_seconds: 30
+
+navigation:
+  port: "serial port"
+  baudrate: 4800
+  path_output: "path/to/navigation"
