@@ -1,0 +1,6 @@
+flow_start_time:
+
+flows:
+  fetch_spasso:
+    deployment_name: fetch-spasso-iwcps-2026
+    interval: 15
