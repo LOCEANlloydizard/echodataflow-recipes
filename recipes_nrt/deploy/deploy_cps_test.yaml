@@ -11,8 +11,14 @@ flows:
     concurrency_group: copy_raw_serial
 
   raw2Sv:
-    flow: raw2Sv_CPS
     deployment_name: raw2Sv-cps-test
+    interval: 5
+    deployment_concurrency:
+      limit: 1
+      collision_strategy: CANCEL_NEW
+
+  process_Sv_CPS:
+    deployment_name: process-Sv-CPS-cps-test
     interval: 5
     deployment_concurrency:
       limit: 1
@@ -22,21 +28,12 @@ flows:
     deployment_name: simulate-transects-cps-test
     interval: 3
 
-  process_CPS:
-    deployment_name: process-CPS-cps-test
+  process_transect_CPS:
+    deployment_name: process-transect-CPS-cps-test
+    interval: 20
     deployment_concurrency:
       limit: 1
       collision_strategy: CANCEL_NEW
-      grace_period_seconds: 3600
-
-    triggers:
-      - expect: "echodataflow.transect.updated"
-        resource_name: "transect-monitor"
-        resource_scope: related
-
-      - expect: "prefect.flow-run.Completed"
-        resource_name: "raw2Sv-cps-test"
-        resource_scope: related
 
   update_cache_CPS:
     deployment_name: update-cache-CPS-cps-test
