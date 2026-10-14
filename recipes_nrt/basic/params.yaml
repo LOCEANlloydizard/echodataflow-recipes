@@ -1,0 +1,23 @@
+flows:
+  raw2Sv:
+    exclude_before: "2023-08-11T00:00:00+00:00"
+    exclude_raw_file: []
+    parallel: false
+    encode_mode: power
+    waveform_mode: CW
+    depth_offset: 7
+    sonar_model: EK80
+    nmea_sentence: GGA
+    filename_pattern: "Hake-*.raw"
+    path_raw: "../../echodataflow-recipes/.local/basic/raw"
+    path_main: "../../echodataflow-recipes/.local/basic/main"
+    file_Sv_csv: Sv_files.csv
+
+  create_MVBS:
+    slice_mins: 20
+    num_slices: 3
+    range_bin: 5m
+    ping_time_bin: 20s
+    path_main: "../../echodataflow-recipes/.local/basic/main"
+    file_Sv_csv: Sv_files.csv
+    file_MVBS_csv: MVBS_files.csv
