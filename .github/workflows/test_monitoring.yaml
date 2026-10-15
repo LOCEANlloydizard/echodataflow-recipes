@@ -27,7 +27,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Install echodataflow
         run: pip install -e ./echodataflow
@@ -144,7 +144,7 @@ jobs:
 
       - name: Show Prefect server log on failure
         if: failure()
-        run: cat /tmp/prefect-server.log
+        run: cat /tmp/prefect-server.log || true
 
       - name: Upload monitoring test artifacts
         if: always()
