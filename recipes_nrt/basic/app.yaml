@@ -1,7 +1,7 @@
 data:
   mvbs:
     type: zarr
-    path: .local/basic/main/MVBS/MVBS_20230811T164000.zarr
+    path: .local/basic/main/MVBS/MVBS_20230811T170000.zarr
 
 elements:
   echograms:

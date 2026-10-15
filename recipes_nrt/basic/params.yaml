@@ -9,15 +9,15 @@ flows:
     sonar_model: EK80
     nmea_sentence: GGA
     filename_pattern: "Hake-*.raw"
-    path_raw: "../../echodataflow-recipes/.local/basic/raw"
-    path_main: "../../echodataflow-recipes/.local/basic/main"
+    path_raw: ".local/basic/raw"
+    path_main: ".local/basic/main"
     file_Sv_csv: Sv_files.csv
 
   create_MVBS:
-    slice_mins: 20
-    num_slices: 3
-    range_bin: 5m
-    ping_time_bin: 20s
-    path_main: "../../echodataflow-recipes/.local/basic/main"
+    slice_mins: 2
+    num_slices: 5
+    range_bin: 2m
+    ping_time_bin: 10s
+    path_main: ".local/basic/main"
     file_Sv_csv: Sv_files.csv
     file_MVBS_csv: MVBS_files.csv
