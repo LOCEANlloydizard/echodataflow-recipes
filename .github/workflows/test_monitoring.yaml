@@ -1,10 +1,13 @@
-name: Test monitoring recipes
+name: Test monitoring recipe
 
 on:
   pull_request:
   push:
     branches:
       - main
+
+permissions:
+  contents: read
 
 jobs:
   test-monitoring:
@@ -17,39 +20,37 @@ jobs:
       - name: Checkout recipes
         uses: actions/checkout@v4
 
-      - name: Checkout echodataflow
-        uses: actions/checkout@v4
-        with:
-          repository: echostack-org/echodataflow
-          path: echodataflow
-          fetch-depth: 0
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
 
-      - name: Install echodataflow
-        run: pip install -e ./echodataflow
+      - name: Install Echodataflow
+        run: |
+          python -m pip install --upgrade pip
+
+          if [ -d "/workspace/dev/echodataflow" ]; then
+            echo "Using local Echodataflow repository"
+            pip install -e /workspace/dev/echodataflow
+          else
+            echo "Using GitHub Echodataflow repository"
+            pip install git+https://github.com/echostack-org/echodataflow.git@main
+          fi
 
       - name: Start Prefect server
         run: |
-          prefect server start --host 127.0.0.1 > /tmp/prefect-server.log 2>&1 &
-          echo $! > /tmp/prefect-server.pid
+          prefect config set PREFECT_API_URL=http://127.0.0.1:4200/api
+          nohup python -m prefect server start > prefect-server.log 2>&1 &
 
-      - name: Wait for Prefect server
-        run: |
           for i in {1..30}; do
-            if curl -fsS http://127.0.0.1:4200/api/health >/dev/null; then
-              exit 0
+            if curl -s http://127.0.0.1:4200/api/health >/dev/null; then
+              echo "Prefect server ready"
+              break
             fi
             sleep 2
           done
 
-          cat /tmp/prefect-server.log
-          exit 1
-
-      - name: Test raw and transect event monitoring
+      - name: Test monitoring recipe
         shell: python
         run: |
           import asyncio
@@ -58,16 +59,71 @@ jobs:
           from datetime import datetime, timedelta, timezone
           from pathlib import Path
 
+          import yaml
           from prefect import get_client
           from prefect.events.filters import EventFilter, EventOccurredFilter
 
-          from echodataflow.utils.raw_monitor import watch_raw_directory
-          from echodataflow.utils.transect_monitor import watch_transect_file
+          from echodataflow.operations.operations_watchdog import (
+              watch_raw_directory,
+              watch_transect_file,
+          )
+          from echodataflow.utils.processing_ledger import (
+              get_raw_files_to_process,
+              get_transects_to_process,
+          )
+
+          recipe = Path("recipes_nrt/monitoring")
+
+          with (recipe / "deploy.yaml").open() as stream:
+              deploy = yaml.safe_load(stream)
+
+          with (recipe / "params.yaml").open() as stream:
+              params = yaml.safe_load(stream)
+
+          transect_trigger = deploy["flows"]["transect_update"]["triggers"][0]
+
+          raw_params = params["flows"]["raw2Sv"]
+          transect_params = params["flows"]["transect_update"]
+
+
+          async def wait_for_raw(raw_file, db_path, timeout=10):
+              deadline = time.time() + timeout
+
+              while time.time() < deadline:
+                  files = get_raw_files_to_process(db_path)
+
+                  if raw_file.resolve() in [
+                      path.resolve() for path in files
+                  ]:
+                      return
+
+                  await asyncio.sleep(0.5)
+
+              raise AssertionError(
+                  f"RAW file was not registered: {raw_file}"
+              )
+
+
+          async def wait_for_transect(db_path, timeout=10):
+              deadline = time.time() + timeout
+
+              while time.time() < deadline:
+                  transects = get_transects_to_process(db_path)
+
+                  if transects:
+                      return
+
+                  await asyncio.sleep(0.5)
+
+              raise AssertionError(
+                  "Transect was not registered"
+              )
 
 
           async def has_event(event_name):
               async with get_client() as client:
                   now = datetime.now(timezone.utc)
+
                   page = await client.read_events(
                       filter=EventFilter(
                           occurred=EventOccurredFilter(
@@ -75,7 +131,7 @@ jobs:
                               until=now,
                           )
                       ),
-                      limit=100,
+                      limit=50,
                   )
 
                   return any(
@@ -90,6 +146,7 @@ jobs:
               while time.time() < deadline:
                   if await has_event(event_name):
                       return
+
                   await asyncio.sleep(0.5)
 
               raise AssertionError(
@@ -100,28 +157,46 @@ jobs:
           async def main():
               with tempfile.TemporaryDirectory() as tmp:
                   root = Path(tmp)
+                  db_path = root / "monitoring.db"
 
-                  # RAW monitoring
+                  # raw monitoring
                   raw_dir = root / "raw"
                   raw_dir.mkdir()
 
-                  observer = watch_raw_directory(raw_dir)
+                  observer = watch_raw_directory(
+                      raw_dir,
+                      db_path,
+                  )
 
                   try:
-                      (raw_dir / "test.raw").write_bytes(b"dummy raw data")
-                      await wait_for_event("echodataflow.raw.updated")
+                      pattern = raw_params["filename_pattern"]
+                      suffix = pattern.removeprefix("*")
+                      raw_file = raw_dir / f"test{suffix}"
+
+                      raw_file.write_bytes(b"dummy raw data")
+
+                      await wait_for_raw(
+                          raw_file,
+                          db_path,
+                      )
                   finally:
                       observer.stop()
                       observer.join()
 
-                  # Transect monitoring
-                  transect_file = root / "transects.csv"
+                  # transect monitoring
+                  transect_file = root / Path(
+                      transect_params["path_transect_csv"]
+                  ).name
+
                   transect_file.write_text(
                       "transectPart,transectNumber,transectStart,transectEnd\n"
                       "1,1,2024-06-25T21:45:00+00:00,\n"
                   )
 
-                  observer = watch_transect_file(transect_file)
+                  observer = watch_transect_file(
+                      transect_file,
+                      db_path,
+                  )
 
                   try:
                       transect_file.write_text(
@@ -130,8 +205,10 @@ jobs:
                           "2024-06-25T21:50:00+00:00\n"
                       )
 
+                      await wait_for_transect(db_path)
+
                       await wait_for_event(
-                          "echodataflow.transect.updated"
+                          transect_trigger["expect"]
                       )
                   finally:
                       observer.stop()
@@ -140,15 +217,8 @@ jobs:
 
           asyncio.run(main())
 
-          print("RAW and transect Prefect events received successfully.")
+          print("Monitoring recipe completed successfully.")
 
       - name: Show Prefect server log on failure
         if: failure()
-        run: cat /tmp/prefect-server.log || true
-
-      - name: Upload monitoring test artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: monitoring-test-artifacts
-          path: /tmp/prefect-server.log
+        run: cat prefect-server.log || true
