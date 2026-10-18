@@ -151,12 +151,13 @@ jobs:
           from panel.io.save import save
 
           root = Path.cwd().resolve()
-
+          
           local_act_root = Path("/workspace/dev/echodataflow-recipes")
+          
           if local_act_root.exists():
-              output_dir = local_act_root / ".local/basic/pages"
+              output_dir = local_act_root / ".local/pages/basic_recipe"
           else:
-              output_dir = root / ".local/basic/pages"
+              output_dir = root / ".local/pages/basic_recipe"
 
           output_dir.mkdir(parents=True, exist_ok=True)
           output = output_dir / "index.html"
@@ -179,13 +180,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: basic-recipe-preview
-          path: .local/basic/pages
+          path: .local/pages/basic_recipe
 
       - name: Upload GitHub Pages artifact
         if: github.event_name == 'push'
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .local/basic/pages
+          path: .local/pages
 
       - name: Show Prefect logs on failure
         if: failure()
