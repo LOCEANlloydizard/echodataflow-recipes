@@ -151,13 +151,13 @@ jobs:
           from panel.io.save import save
 
           root = Path.cwd().resolve()
-          
+
           local_act_root = Path("/workspace/dev/echodataflow-recipes")
-          
+
           if local_act_root.exists():
-              output_dir = local_act_root / ".local/pages/basic_recipe"
+              output_dir = local_act_root / ".local/pages/basic-recipe"
           else:
-              output_dir = root / ".local/pages/basic_recipe"
+              output_dir = root / ".local/pages/basic-recipe"
 
           output_dir.mkdir(parents=True, exist_ok=True)
           output = output_dir / "index.html"
@@ -175,12 +175,17 @@ jobs:
           print(f"Saved static app to {output}")
           PY
 
+      - name: Prepare Pages landing page
+        run: |
+          mkdir -p .local/pages
+          cp pages/index.html .local/pages/index.html
+
       - name: Upload PR preview artifact
         if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: basic-recipe-preview
-          path: .local/pages/basic_recipe
+          path: .local/pages/basic-recipe
 
       - name: Upload GitHub Pages artifact
         if: github.event_name == 'push'
