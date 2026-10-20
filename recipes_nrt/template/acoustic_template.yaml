@@ -1,19 +1,16 @@
-# Generic Echoshader app using the working HoloViz layout.
-# Place this YAML beside echoshader_yaml_app.py in echodataflow-recipes.
-app:
-  title: Echoshader — Basic acoustic exploration
+﻿app:
+  title: Echoshader - Acoustic template
   source: survey
-  route: basic
+  route: ''
   port: 1807
-
 data:
   survey:
-    type: netcdf
-    path: ../../../echoshader/examples/data/concatenated_MVBS.nc
+    type: zarr
+    path: ../../.local/template/main/MVBS/MVBS_20230811T164000.zarr
     label: Acoustic survey
-
 navigation:
   max_pings: 500
-
 display:
   max_range_samples: 1200
+
+
