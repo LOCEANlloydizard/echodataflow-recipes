@@ -10,6 +10,9 @@ on:
 permissions:
   contents: read
 
+env:
+  PREFECT_API_URL: http://127.0.0.1:4200/api
+
 jobs:
   acoustic-template:
     runs-on: ubuntu-latest
@@ -80,16 +83,45 @@ jobs:
 
       - name: Start Prefect server
         run: |
-          prefect config set PREFECT_API_URL=http://127.0.0.1:4200/api
-          nohup python -m prefect server start > prefect-server.log 2>&1 &
+          nohup python -m prefect server start \
+            > prefect-server.log 2>&1 < /dev/null &
 
-          for i in {1..30}; do
-            if curl -s http://127.0.0.1:4200/api/health >/dev/null; then
+          echo $! > prefect-server.pid
+
+          for i in {1..60}; do
+            if curl --fail --silent http://127.0.0.1:4200/api/health > /dev/null; then
               echo "Prefect server ready"
               break
             fi
+
+            if ! kill -0 "$(cat prefect-server.pid)" 2>/dev/null; then
+              echo "Prefect server exited"
+              cat prefect-server.log
+              exit 1
+            fi
+
             sleep 2
           done
+
+          curl --fail http://127.0.0.1:4200/api/health
+
+      - name: Create work pool
+        run: |
+          prefect work-pool create --type process local
+
+      - name: Start Prefect worker
+        run: |
+          nohup python -m prefect worker start --pool local \
+            > prefect-worker.log 2>&1 < /dev/null &
+
+          echo $! > prefect-worker.pid
+          sleep 5
+
+      - name: Check Prefect connection
+        run: |
+          echo "PREFECT_API_URL=$PREFECT_API_URL"
+          curl --fail --show-error http://127.0.0.1:4200/api/health
+          prefect work-pool ls
 
       - name: Create work pool
         run: |
