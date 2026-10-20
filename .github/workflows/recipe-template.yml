@@ -28,7 +28,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e .
-          python -m pip install "fastapi==0.139.0"
           python -m pip check
           python -c "import fastapi, prefect; print('FastAPI:', fastapi.__version__, 'Prefect:', prefect.__version__)"
 
@@ -123,15 +122,6 @@ jobs:
         run: |
           echo "PREFECT_API_URL=$PREFECT_API_URL"
           curl --fail --show-error http://127.0.0.1:4200/api/health
-
-      - name: Create work pool
-        run: |
-          prefect work-pool create --type process local || true
-
-      - name: Start Prefect worker
-        run: |
-          nohup python -m prefect worker start --pool local > prefect-worker.log 2>&1 &
-          sleep 5
 
       - name: Deploy flows
         run: |
